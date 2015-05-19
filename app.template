@@ -29,7 +29,7 @@
       "Description": "Where the cookbooks are stored"
     },
     "AppRepo": {
-      "Default" : "https://s3.amazonaws.com/ppm-app/helloworld-1.0.0.tgz",
+      "Default" : "https://s3.amazonaws.com/ppm-app2/helloworld-1.0.0.tgz",
       "Type" : "String",
       "Description": "Where the npm application code is stored"
     },
@@ -72,8 +72,8 @@
           },
           "chef_client": {
             "config": {
-              "http_proxy": "http://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com",
-              "https_proxy": "https://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com",
+              "http_proxy": "http://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com:3128",
+              "https_proxy": "http://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com:3128",
               "no_proxy": "*.amazonaws.com,10.*"
             }
           },
