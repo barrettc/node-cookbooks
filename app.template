@@ -4,7 +4,7 @@
   "Parameters": {
     "AppName":{
       "Type":"String",
-      "Default":"npm",
+      "Default":"app",
       "Description":"What to call the app"
     },
     "DefaultOs" : {
@@ -24,19 +24,14 @@
       "ConstraintDescription" : "must be a valid EC2 instance type."
     },
     "GitCookbookRepo": {
-      "Default" : "https://github.com/SciSpike/npm-cookbooks.git",
+      "Default" : "https://github.com/barrettc/node-cookbooks.git",
       "Type" : "String",
       "Description": "Where the cookbooks are stored"
     },
-    "GitAppRepo": {
-      "Default" : "https://github.com/AMCHealth/npm-server.git",
+    "AppRepo": {
+      "Default" : "https://s3.amazonaws.com/ppm-app/helloworld-1.0.0.tgz",
       "Type" : "String",
       "Description": "Where the npm application code is stored"
-    },
-    "GitAppRepoRevision" : {
-      "Type" : "String",
-      "Default" : "master",
-      "Description" : "The revision to pull"
     },
     "DefaultKeyPair" : {
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
@@ -47,48 +42,13 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "VPC" : {
-      "Default":"vpc-1fa55b7a",
+      "Default":"vpc-f7231292",
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
     "PublicSubnet" : {
-      "Default":"subnet-826f5cc4",
+      "Default":"subnet-f4e480ad",
       "Description" : "Id of the public subnet",
-      "Type" : "String"
-    },
-    "CouchServer" : {
-      "Default" : "http://127.0.0.1:5984",
-      "Description" : "The CouchServer you'd like VHost ActualAddress",
-      "Type" : "String"
-    },
-    "CouchAdminPassword" : {
-      "NoEcho": "true",
-      "Description" : "The CouchServer's admin password",
-      "Type" : "String"
-    },
-    "VHost" : {
-      "Default" : "npm-scispike.ddns.net",
-      "Description" : "The name of the VHost to connect to",
-      "Type" : "String"
-    },
-    "VHostCentral" : {
-      "Default" : "localhost:5984",
-      "Description" : "The name of the VHost to connect to",
-      "Type" : "String"
-    },
-    "VHostCentralPath" : {
-      "Default" : "/central/_design/app/_rewrite",
-      "Description" : "/central/_design/app/_rewrite",
-      "Type" : "String"
-    },
-    "VHostPath" : {
-      "Default" : "/registry/_design/app/_rewrite",
-      "Description" : "/registry/_design/app/_rewrite",
-      "Type" : "String"
-    },
-    "NpmMaster" : {
-      "Default" : "https://registry.npmjs.org",
-      "Description" : "the server url to whom we delegate",
       "Type" : "String"
     }
   },
@@ -108,43 +68,18 @@
         "DefaultInstanceProfileArn": { "Fn::GetAtt": [ "OpsWorksInstanceProfile", "Arn" ] },
         "CustomJson": {
           "environment_variables":{
-            "VHOST" :{"Ref":"VHost"},
-            "VHOST_CENTRAL":{"Ref":"VHostCentral"},
-            "COUCH_PASSWORD":{"Ref":"CouchAdminPassword"},
-            "COUCH_SERVER":{"Ref":"CouchServer"},
-            "NPM_MASTER":{"Ref":"NpmMaster"},
             "PORT":80
           },
+          "chef_client": {
+            "config": {
+              "http_proxy": "http://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com",
+              "https_proxy": "https://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com",
+              "no_proxy": "*.amazonaws.com,10.*"
+            }
+          },
+   
           "amazon" : {
             "region" : { "Ref" : "AWS::Region" }
-          },
-          "couch_db":{
-            "vhosts":[
-              {
-                "name":{"Ref":"VHost"},
-                "value":{"Ref":"VHostPath"}
-              },
-              {
-                "name":{"Ref":"VHostCentral"},
-                "value":{"Ref":"VHostCentralPath"}
-              }],
-            "config": {
-              "couchdb":{
-                "os_process_timeout":15000,
-                "delayed_commits":false
-              },
-              "httpd": {
-                "secure_rewrites":false,
-                "bind_address":"0.0.0.0"
-              },
-              "couch_httpd_auth" :{
-                "public_fields":"appdotnet, avatar, avatarMedium, avatarLarge, date, email, fields, freenode, fullname, github, homepage, name, roles, twitter, type, _id, _rev",
-                "users_db_public": true
-              },
-              "admins":{
-                "admin":{"Ref":"CouchAdminPassword"}
-              }
-            }
           }
         },
         "DefaultOs": { "Ref": "DefaultOs" },
@@ -156,7 +91,7 @@
         }
       }
     },
-    "npmLayer": {
+    "appLayer": {
       "Type": "AWS::OpsWorks::Layer",
       "DependsOn": "app",
       "Properties": {
@@ -167,20 +102,8 @@
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "true",
-        "CustomSecurityGroupIds" : [
-          { "Ref" : "couchDbSecurityGroup" },
-          { "Ref" : "smartProxySecurityGroup" }
-        ],
-        "CustomRecipes": {
-          "Setup":[ "couchdb-cookbook::source" ]
-        },
-        "VolumeConfigurations" : [
-          {
-            "MountPoint" : "/usr/local/var/lib/couchdb",
-            "NumberOfDisks" : 2,
-            "RaidLevel" : 1,
-            "Size" : { "Ref" : "StorageSize" }
-          }
+        "CustomSecurityGroupIds" : [          
+          { "Ref" : "appProxySecurityGroup" }
         ]
       }
     },
@@ -191,17 +114,16 @@
         "Name": { "Ref" : "AppName" },
         "Type": "nodejs",
         "AppSource": {
-          "Type": "git",
-          "Url": { "Ref" : "GitAppRepo" },
-          "Revision" : { "Ref" : "GitAppRepoRevision" }
+          "Type": "archive",
+          "Url": { "Ref" : "AppRepo" }
         }
       }
     },
-     "npmInstance": {
+     "appInstance": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "LayerIds": [ { "Ref": "npmLayer" } ],
+        "LayerIds": [ { "Ref": "appLayer" } ],
         "InstallUpdatesOnBoot": false,
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",
@@ -210,23 +132,7 @@
       }
     },
 
-    "couchDbSecurityGroup": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",
-        "VpcId": { "Ref": "VPC" },
-        "SecurityGroupIngress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "5984",
-            "ToPort": "5984",
-            "CidrIp": "0.0.0.0/0"
-          }
-        ]
-      }
-    },
-
-    "smartProxySecurityGroup": {
+    "appProxySecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",

@@ -1,0 +1,232 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Autoscaled Squid Proxies into Two AZ VPC",
+
+  "Parameters" : {
+
+    "VPCID" : {
+       "Description" : "VPC to tag these proxies names with",
+       "Type" : "String"
+    },
+
+    "SquidKeyName" : {
+       "Description" : "EC2 key pair for ssh access to proxies",
+       "Type" : "String"
+    },
+
+    "SquidSubnets" : {
+      "Description" : "Comma delimited list of DMZ subnets to launch instances into",
+      "Type" : "CommaDelimitedList"
+    },
+
+    "SquidLoadBalancerSubnets" : {
+      "Description" : "Comma delimited list of Private subnets to launch instances into",
+      "Type" : "CommaDelimitedList"
+    },
+
+    "SquidSecurityGroup" : {
+      "Description" : "Comma delimited list of security group IDs for squid instances to launch within",
+      "Type" : "CommaDelimitedList"
+    },
+
+    "SquidLBSecurityGroup" : {
+      "Description" : "Security group ID for squid load balancer to launch within",
+      "Type" : "String"
+    },
+
+    "SquidInstanceType" : {
+      "Description" : "Squid proxy EC2 instance type",
+      "Type" : "String",
+      "Default" : "m1.xlarge",
+      "AllowedValues" : [ "m1.small","m1.medium","m1.large", "m1.xlarge" ]
+    },
+
+    "AvailabilityZones" : {
+      "Description" : "Comma delimited list of Availability Zones to deploy Squid proxies into",
+      "Type" : "CommaDelimitedList",
+      "Default" :  "us-east-1c,us-east-1d"
+    }
+  },
+
+  "Mappings" : {
+    "AMIRegionMap" : {
+      "eu-west-1"      : { "SquidAMI" : "ami-3c5f5748" },
+      "sa-east-1"      : { "SquidAMI" : "ami-89c81394" },
+      "us-east-1"      : { "SquidAMI" : "ami-54cf5c3d" },
+      "ap-northeast-1" : { "SquidAMI" : "ami-5d7dfa5c" },
+      "us-west-2"      : { "SquidAMI" : "ami-8e27adbe" },
+      "us-west-1"      : { "SquidAMI" : "ami-b63210f3" },
+      "ap-southeast-1" : { "SquidAMI" : "ami-ba7538e8" },
+      "ap-southeast-2" : { "SquidAMI" : "ami-b6df4e8c" }
+    }
+  },
+
+  "Resources" : {
+
+    "SquidLaunchConfiguration" : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "commands" : {
+              "00-install-squid" : {
+                "command" : { "Fn::Join" : ["", [
+                  "yum -y install squid\n",
+                  "service squid start\n",
+                  "chkconfig squid on"
+                  ]]
+                }
+              }
+            }
+          }
+        }
+      },
+      "Properties" : {
+        "AssociatePublicIpAddress" : "true",
+        "SecurityGroups" : { "Ref" : "SquidSecurityGroup" },
+        "InstanceType" : { "Ref" : "SquidInstanceType" },
+        "KeyName" : { "Ref" : "SquidKeyName" },
+        "ImageId" : { "Fn::FindInMap" : [ "AMIRegionMap", { "Ref" : "AWS::Region" }, "SquidAMI" ] },
+	"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+               "#!/bin/bash\n",
+               "yum update clean all\n",
+               "yum update -y aws-cfn-bootstrap\n",
+               "yum update -y python-boto\n",
+               "/opt/aws/bin/cfn-init --region ", { "Ref" : "AWS::Region" }, " -v -s ", { "Ref": "AWS::StackName" },
+               " -r SquidLaunchConfiguration\n",
+               "/opt/aws/bin/cfn-signal -e $? '", { "Ref" : "ControllerHandle" }, "'\n"
+            ]]
+            }
+        }
+      }
+    },
+
+    "SquidLoadBalancer" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "Scheme" : "internal",
+        "SecurityGroups" : [ {"Ref" : "SquidLBSecurityGroup" } ],
+        "Subnets" : { "Ref": "SquidLoadBalancerSubnets" },
+        "Listeners" : [ { "LoadBalancerPort" : "3128", "InstancePort" : "3128", "Protocol" : "TCP" } ],
+        "HealthCheck" : {
+          "Target" : "TCP:3128",
+          "HealthyThreshold" : "3",
+          "UnhealthyThreshold" : "5",
+          "Interval" : "90",
+          "Timeout" : "60"
+        }
+      }
+    },
+
+    "SquidAutoscalingGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : {"Ref" : "AvailabilityZones"},
+        "MinSize" : "2",
+        "MaxSize" : "1000",
+        "LaunchConfigurationName" : {"Ref" : "SquidLaunchConfiguration" },
+        "LoadBalancerNames" : [ {"Ref" : "SquidLoadBalancer" } ],
+        "VPCZoneIdentifier" :  { "Ref" : "SquidSubnets" },
+        "Tags" : [ 
+          { "Key" : "Name", "Value" : { "Fn::Join" : ["", [
+              "Squid-", { "Ref" : "VPCID"} ]] }, "PropagateAtLaunch" : "true" }
+        ]
+      }
+    },
+
+    "SquidAutoscaleUpPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "PercentChangeInCapacity",
+        "AutoScalingGroupName" : { "Ref" : "SquidAutoscalingGroup" },
+        "Cooldown" : "300",
+        "ScalingAdjustment" : "50"
+      }
+    },
+
+    "SquidAutoscaleDownPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "PercentChangeInCapacity",
+        "AutoScalingGroupName" : { "Ref" : "SquidAutoscalingGroup" },
+        "Cooldown" : "300",
+        "ScalingAdjustment" : "-33"
+      }
+    },
+
+    "SquidNetworkBandwidthHighAlarm" : {
+       "Type" : "AWS::CloudWatch::Alarm",
+       "Properties" : {
+         "AlarmDescription" : "Scale up if average NetworkIn > 750000000 for 5 minutes",
+         "MetricName" : "NetworkIn",
+         "Namespace" : "AWS/EC2",
+         "Statistic" : "Average",
+         "Period" : "300",
+         "EvaluationPeriods" : "1",
+         "Threshold" : "750000000",
+         "AlarmActions" : [ { "Ref" : "SquidAutoscaleUpPolicy" } ],
+         "Dimensions" : [
+           {
+             "Name" : "AutoScalingGroupName",
+             "Value" : { "Ref" : "SquidAutoscalingGroup" }
+           }
+         ],
+         "ComparisonOperator" : "GreaterThanThreshold"
+       }
+    },
+
+    "SquidNetworkBandwidthLowAlarm" : {
+       "Type" : "AWS::CloudWatch::Alarm",
+       "Properties" : {
+         "AlarmDescription" : "Scale down if average NetworkIn < 250000000 for 15 minutes",
+         "MetricName" : "NetworkIn",
+         "Namespace" : "AWS/EC2",
+         "Statistic" : "Average",
+         "Period" : "300",
+         "EvaluationPeriods" : "3",
+         "Threshold" : "250000000",
+         "AlarmActions" : [ { "Ref" : "SquidAutoscaleDownPolicy" } ],
+         "Dimensions" : [
+           {
+             "Name" : "AutoScalingGroupName",
+             "Value" : { "Ref" : "SquidAutoscalingGroup" }
+           }
+         ],
+         "ComparisonOperator" : "LessThanThreshold"
+       }
+    },
+
+    "ControllerHandle" : {
+      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+    },
+
+    "ControllerCondition" : {
+      "Type" : "AWS::CloudFormation::WaitCondition",
+      "DependsOn" : "SquidLaunchConfiguration",
+      "Properties" : {
+        "Handle" : { "Ref" : "ControllerHandle" },
+        "Timeout" : "1800"
+      }
+    }
+    
+  },
+
+  "Outputs" : {
+
+    "SquidLBName" : {
+      "Description" : "Name of Squid LB",
+      "Value" : { "Ref" : "SquidLoadBalancer" }
+    },
+
+    "SquidURL" : {
+      "Description" : "URL of Squid LB",
+      "Value" : { "Fn::Join" : [ "", [ "http://", { "Fn::GetAtt" : [ "SquidLoadBalancer", "DNSName" ] } ] ] }
+    },
+
+    "SquidDNSName" : {
+      "Description" : "DNS Name of Squid LB",
+      "Value" : { "Fn::GetAtt" : [ "SquidLoadBalancer", "DNSName" ] }
+    }
+  }
+}
