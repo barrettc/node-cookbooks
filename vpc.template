@@ -417,6 +417,17 @@
       }
     },
 
+    "BastionSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Allow ssh access to bastion",
+        "VpcId" : { "Ref" : "VPC" },
+        "SecurityGroupIngress" : [
+          { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22",  "CidrIp" : "0.0.0.0/0"} ],
+        "SecurityGroupEgress" : [ ]
+      }
+    },
+
     "InternalSshSecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
