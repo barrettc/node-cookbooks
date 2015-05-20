@@ -42,13 +42,13 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "VPC" : {
-      "Default":"vpc-f7231292",
+      "Default":"vpc-964272f3",
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
-    "PublicSubnet" : {
-      "Default":"subnet-f4e480ad",
-      "Description" : "Id of the public subnet",
+    "PrivateSubnet" : {
+      "Default":"subnet-cc23ade7",
+      "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "String"
     }
   },
@@ -58,7 +58,7 @@
       "Properties": {
         "Name": { "Ref": "AWS::StackName" },
         "VpcId" : { "Ref" : "VPC" },
-        "DefaultSubnetId" : { "Ref" : "PublicSubnet" },
+        "DefaultSubnetId" : { "Ref" : "PrivateSubnet" },
         "DefaultSshKeyName" : { "Ref" : "DefaultKeyPair" },
         "ConfigurationManager" : {
           "Name" : "Chef",
@@ -101,7 +101,7 @@
         "Shortname": { "Ref" : "AppName" },
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
-        "AutoAssignPublicIps": "true",
+        "AutoAssignPublicIps": "false",
         "CustomSecurityGroupIds" : [          
           { "Ref" : "appProxySecurityGroup" }
         ]
