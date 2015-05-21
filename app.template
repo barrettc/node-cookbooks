@@ -83,15 +83,11 @@
               "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
             }
           },
+          "mongodb-opsworks" : {
+            "sharded" : true
+          },
           "environment_variables":{
             "PORT":80
-          },
-          "chef_client": {
-            "config": {
-              "http_proxy": "http://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com:3128",
-              "https_proxy": "http://internal-Autoscale-SquidLoa-L0MJYX6S5ZU2-1912848131.us-east-1.elb.amazonaws.com:3128",
-              "no_proxy": "*.amazonaws.com,10.*"
-            }
           },
    
           "amazon" : {
