@@ -237,9 +237,9 @@
       "Type": "AWS::OpsWorks::Layer",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": "mongo-replicaset-shardA",
+        "Name": "mongo-replicaset-shard-a",
         "Type": "custom",
-        "Shortname": "shardA",
+        "Shortname": "shard-a",
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
@@ -300,15 +300,15 @@
       "Type": "AWS::OpsWorks::Layer",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": { "Ref" : "AppName" },
+        "Name": "mongo-cfg",
         "Type": "custom",
-        "Shortname": { "Ref" : "AppName" },
+        "Shortname": "mongo-cfg",
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
         "CustomRecipes":{
           "Setup" : ["mongodb::mongodb_org_repo"],
-          "Config" : ["mongodb-opsworks::default", "mongod::configserver"]
+          "Configure" : ["mongodb-opsworks::default", "mongod::configserver"]
         },
         "CustomSecurityGroupIds" : [          
           { "Ref" : "mongoSecurityGroup" }
