@@ -86,7 +86,7 @@
             "install_java":true,
             "snitch":"Ec2Snitch",
             "root_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"db"]]},
-            "log_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"logs"]]},
+            "log_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"logs"]]}
           },
           "mongodb":{
             "config":{
