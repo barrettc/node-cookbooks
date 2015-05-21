@@ -42,12 +42,17 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "VPC" : {
-      "Default":"vpc-964272f3",
+      "Default":"vpc-17182872",
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
     "PrivateSubnet" : {
-      "Default":"subnet-cc23ade7",
+      "Default":"subnet-dd94d7aa",
+      "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
+      "Type" : "String"
+    },
+    "PublicSubnet" : {
+      "Default":"subnet-db94d7ac",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "String"
     }
@@ -128,7 +133,55 @@
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",
         "Architecture": "x86_64",
-        "SubnetId" : {"Ref" : "PublicSubnet"}
+        "SubnetId" : {"Ref" : "PrivateSubnet"}
+      }
+    },
+    "ELB": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "CrossZone" : "true",
+        "SecurityGroups": [ { "Ref": "ELBSecurityGroup" } ],
+        "Subnets": [ { "Ref": "PublicSubnet" } ],
+        "Listeners": [ {
+          "LoadBalancerPort": "80",
+          "InstancePort": "80",
+          "Protocol": "HTTP"
+        } ],
+        "HealthCheck": {
+          "Target": "HTTP:80/",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5",
+          "Interval": "90",
+          "Timeout": "60"
+        }
+      }
+    },
+
+    "ELBAttachment": {
+      "Type": "AWS::OpsWorks::ElasticLoadBalancerAttachment",
+      "Properties": {
+        "ElasticLoadBalancerName": { "Ref": "ELB" },
+        "LayerId": { "Ref": "appLayer" }
+      }
+    },
+
+    "ELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Allow inbound access to the ELB",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [ {
+          "IpProtocol": "tcp",
+          "FromPort": "80",
+          "ToPort": "80",
+          "CidrIp": "0.0.0.0/0"
+        } ],
+        "SecurityGroupEgress": [ {
+          "IpProtocol": "tcp",
+          "FromPort": "80",
+          "ToPort": "80",
+          "CidrIp": "0.0.0.0/0"
+        } ]
       }
     },
 
@@ -138,12 +191,18 @@
         "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",
         "VpcId": { "Ref": "VPC" },
         "SecurityGroupIngress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "80",
-            "ToPort": "80",
-            "CidrIp": "0.0.0.0/0"
-          }
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "80",
+             "ToPort": "80",
+             "CidrIp": "0.0.0.0/0"
+           },
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "22",
+             "ToPort": "22",
+             "CidrIp": "0.0.0.0/0"
+           }
         ]
       }
     },
