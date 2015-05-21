@@ -81,8 +81,11 @@
             "config":{
               "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
               "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
-            }
+            },
+            "collection_name": "this-is-dumb",
+            "cluster_name": false
           },
+                  
           "mongodb-opsworks" : {
             "sharded" : true
           },
@@ -123,7 +126,7 @@
         "Name": { "Ref" : "AppName" },
         "CustomRecipes":{
           "Setup" : ["mongodb::mongodb_org_repo"],
-          "Configure" : ["mongodb-opsworks::default", "mongod::mongos"]
+          "Configure" : ["mongodb-opsworks::default", "mongodb::mongos"]
         },
         "Type": "nodejs-app",
         "Shortname": { "Ref" : "AppName" },
@@ -308,7 +311,7 @@
         "AutoAssignPublicIps": "false",
         "CustomRecipes":{
           "Setup" : ["mongodb::mongodb_org_repo"],
-          "Configure" : ["mongodb-opsworks::default", "mongod::configserver"]
+          "Configure" : ["mongodb-opsworks::default", "mongodb::configserver"]
         },
         "CustomSecurityGroupIds" : [          
           { "Ref" : "mongoSecurityGroup" }
