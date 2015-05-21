@@ -201,7 +201,7 @@
 	"IpProtocol": "tcp",
 	"FromPort": "22",
 	"ToPort": "22",
-	"SourceSecurityGroupId": { "Ref": "NatSecurityGroup" }
+  "CidrIp" : "0.0.0.0/0"
       }
     },
     
@@ -221,11 +221,21 @@
       "DependsOn" : ["NatSecurityGroup"],
       "Type": "AWS::EC2::SecurityGroupIngress",
       "Properties": {
-	"GroupId": { "Ref": "NatSecurityGroup" },
-	"IpProtocol": "tcp",
-	"FromPort": "80",
-	"ToPort": "80",
-	"SourceSecurityGroupId": { "Ref": "NatSecurityGroup" }
+  "GroupId": { "Ref": "NatSecurityGroup" },
+  "IpProtocol": "tcp",
+  "FromPort": "80",
+  "ToPort": "80",
+  "CidrIp" : "0.0.0.0/0"
+      }
+    },   "NatSecurityGroupIngress9418" : {
+      "DependsOn" : ["NatSecurityGroup"],
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+  "GroupId": { "Ref": "NatSecurityGroup" },
+  "IpProtocol": "tcp",
+  "FromPort": "9418",
+  "ToPort": "9418",
+  "CidrIp" : "0.0.0.0/0"
       }
     },
 
@@ -237,7 +247,7 @@
 	"IpProtocol": "tcp",
 	"FromPort": "443",
 	"ToPort": "443",
-	"SourceSecurityGroupId": { "Ref": "NatSecurityGroup" }
+  "CidrIp" : "0.0.0.0/0"
       }
     },
 
