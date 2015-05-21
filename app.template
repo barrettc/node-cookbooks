@@ -83,6 +83,9 @@
               "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
             }
           },
+          "mongodb-opsworks" : {
+            "sharded" : true
+          },
           "environment_variables":{
             "PORT":80
           },
