@@ -46,14 +46,19 @@
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
-    "PrivateSubnet" : {
+    "PrivateSubnets" : {
       "Default":"subnet-dd94d7aa",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
-      "Type" : "String"
+      "Type" : "CommaDelimitedList"
     },
-    "PublicSubnet" : {
+    "PublicSubnets" : {
       "Default":"subnet-db94d7ac",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
+      "Type" : "CommaDelimitedList"
+    },
+    "MongoPath" : {
+      "Default":"/data",
+      "Description" : "where the mongo stuff goes ",
       "Type" : "String"
     }
   },
@@ -63,7 +68,7 @@
       "Properties": {
         "Name": { "Ref": "AWS::StackName" },
         "VpcId" : { "Ref" : "VPC" },
-        "DefaultSubnetId" : { "Ref" : "PrivateSubnet" },
+        "DefaultSubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] },
         "DefaultSshKeyName" : { "Ref" : "DefaultKeyPair" },
         "ConfigurationManager" : {
           "Name" : "Chef",
@@ -72,6 +77,12 @@
         "ServiceRoleArn": { "Fn::Join": ["", ["arn:aws:iam::", {"Ref":"AWS::AccountId"}, ":role/aws-opsworks-service-role"]] },
         "DefaultInstanceProfileArn": { "Fn::GetAtt": [ "OpsWorksInstanceProfile", "Arn" ] },
         "CustomJson": {
+          "mongodb":{
+            "config":{
+              "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
+              "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
+            }
+          },
           "environment_variables":{
             "PORT":80
           },
@@ -96,22 +107,6 @@
         }
       }
     },
-    "appLayer": {
-      "Type": "AWS::OpsWorks::Layer",
-      "DependsOn": "app",
-      "Properties": {
-        "StackId": { "Ref": "stack" },
-        "Name": { "Ref" : "AppName" },
-        "Type": "nodejs-app",
-        "Shortname": { "Ref" : "AppName" },
-        "EnableAutoHealing": "true",
-        "AutoAssignElasticIps": "false",
-        "AutoAssignPublicIps": "false",
-        "CustomSecurityGroupIds" : [          
-          { "Ref" : "appProxySecurityGroup" }
-        ]
-      }
-    },
     "app": {
       "Type": "AWS::OpsWorks::App",
       "Properties": {
@@ -124,8 +119,29 @@
         }
       }
     },
+    "appLayer": {
+      "Type": "AWS::OpsWorks::Layer",
+      "DependsOn": "app",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": { "Ref" : "AppName" },
+        "CustomRecipes":{
+          "Setup" : ["mongodb::mongodb_org_repo"],
+          "Configure" : ["mongodb-opsworks::default", "mongod::mongos"]
+        },
+        "Type": "nodejs-app",
+        "Shortname": { "Ref" : "AppName" },
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomSecurityGroupIds" : [          
+          { "Ref" : "appProxySecurityGroup" }
+        ]
+      }
+    },
      "appInstance": {
       "Type": "AWS::OpsWorks::Instance",
+      "DependsOn":["mongocfg1","mongocfg2","mongocfg3"],
       "Properties": {
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "appLayer" } ],
@@ -133,7 +149,7 @@
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",
         "Architecture": "x86_64",
-        "SubnetId" : {"Ref" : "PrivateSubnet"}
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
       }
     },
     "ELB": {
@@ -141,7 +157,7 @@
       "Properties": {
         "CrossZone" : "true",
         "SecurityGroups": [ { "Ref": "ELBSecurityGroup" } ],
-        "Subnets": [ { "Ref": "PublicSubnet" } ],
+        "Subnets": [ { "Ref": "PublicSubnets" } ],
         "Listeners": [ {
           "LoadBalancerPort": "80",
           "InstancePort": "80",
@@ -184,7 +200,6 @@
         } ]
       }
     },
-
     "appProxySecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
@@ -204,6 +219,148 @@
              "CidrIp": "0.0.0.0/0"
            }
         ]
+      }
+    }
+    ,
+    "mongoSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "27017",
+             "ToPort": "27017",
+             "CidrIp": "0.0.0.0/0"
+           }
+        ]
+      }
+    },
+    "mongo-replicaset-shardA": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "shardA",
+        "Type": "custom",
+        "Shortname": "shardA",
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomRecipes":{
+          "Setup" : ["mongodb::mongodb_org_repo"],
+          "Configure" : ["mongodb-opsworks::default", "mongodb::shard", "mongodb::replicaset"]
+        },
+        "CustomSecurityGroupIds" : [          
+          { "Ref" : "mongoSecurityGroup" }
+        ],
+        "VolumeConfigurations" : [
+          {
+            "MountPoint" : {"Ref":"MongoPath"},
+            "NumberOfDisks" : 2,
+            "RaidLevel" : 1,
+            "Size" : { "Ref" : "StorageSize" }
+          }
+        ]
+      }
+    },
+     "shardA0": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongo-replicaset-shardA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "shardA1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongo-replicaset-shardA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "shardA2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongo-replicaset-shardA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "mongoCfgLayer": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": { "Ref" : "AppName" },
+        "Type": "nodejs-app",
+        "Shortname": { "Ref" : "AppName" },
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomRecipes":{
+          "Setup" : ["mongodb::mongodb_org_repo"],
+          "Config" : ["mongodb-opsworks::default", "mongod::configserver"]
+        },
+        "CustomSecurityGroupIds" : [          
+          { "Ref" : "mongoSecurityGroup" }
+        ],
+        "VolumeConfigurations" : [
+          {
+            "MountPoint" : {"Ref":"MongoPath"},
+            "NumberOfDisks" : 2,
+            "RaidLevel" : 1,
+            "Size" : { "Ref" : "StorageSize" }
+          }
+        ]
+      }
+    },
+     "mongocfg0": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "mongocfg1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "mongocfg2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
       }
     },
 
