@@ -28,3 +28,12 @@
 [submodule "cassandra"]
 	path = cassandra
 	url = https://github.com/michaelklishin/cassandra-chef-cookbook.git
+[submodule "ulimit"]
+	path = ulimit
+	url = https://github.com/bmhatfield/chef-ulimit.git
+[submodule "java"]
+	path = java
+	url = https://github.com/agileorbit-cookbooks/java.git
+[submodule "ark"]
+	path = ark
+	url = https://github.com/burtlo/ark.git

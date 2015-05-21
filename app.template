@@ -60,6 +60,11 @@
       "Default":"/data",
       "Description" : "where the mongo stuff goes ",
       "Type" : "String"
+    },
+    "CassandraPath" : {
+      "Default":"/data",
+      "Description" : "where the mongo stuff goes ",
+      "Type" : "String"
     }
   },
   "Resources": {
@@ -77,6 +82,12 @@
         "ServiceRoleArn": { "Fn::Join": ["", ["arn:aws:iam::", {"Ref":"AWS::AccountId"}, ":role/aws-opsworks-service-role"]] },
         "DefaultInstanceProfileArn": { "Fn::GetAtt": [ "OpsWorksInstanceProfile", "Arn" ] },
         "CustomJson": {
+          "cassandra":{
+            "install_java":true,
+            "snitch":"Ec2Snitch",
+            "root_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"db"]]},
+            "log_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"logs"]]},
+          },
           "mongodb":{
             "config":{
               "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
@@ -352,6 +363,69 @@
       "Properties": {
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    
+    "cassandraClusterA": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "cassandra-cluster-a",
+        "Type": "custom",
+        "Shortname": "cluster-a",
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomRecipes":{
+          "Setup" : ["cassandra-opsworks::default","cassandra::tarball"]
+        },
+        "CustomSecurityGroupIds" : [          
+          { "Ref" : "mongoSecurityGroup" }
+        ],
+        "VolumeConfigurations" : [
+          {
+            "MountPoint" : {"Ref":"MongoPath"},
+            "NumberOfDisks" : 2,
+            "RaidLevel" : 1,
+            "Size" : { "Ref" : "StorageSize" }
+          }
+        ]
+      }
+    },
+     "cassandraClusterA0": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "cassandraClusterA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "cassandraClusterA1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "cassandraClusterA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "cassandraClusterA2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "cassandraClusterA" } ],
         "InstallUpdatesOnBoot": false,
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",
