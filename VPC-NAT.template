@@ -32,7 +32,9 @@
       "Private1" : { "CIDR" : "10.0.1.0/24" },
       "Public2"  : { "CIDR" : "10.0.2.0/24" },
       "Private3" : { "CIDR" : "10.0.3.0/24" },
-      "Public4"  : { "CIDR" : "10.0.4.0/24" }
+      "Public4"  : { "CIDR" : "10.0.4.0/24" },
+      "Private5" : { "CIDR" : "10.0.5.0/24" },
+      "Public6"  : { "CIDR" : "10.0.6.0/24" }
     },
     "NatRegionMap" : {
       "us-east-1"      : { "AMI" : "ami-b0210ed8" },
@@ -85,6 +87,20 @@
           { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
           { "Key" : "Network", "Value" : "Public4" },
       	  { "Key" : "Name", "Value" : "Public Subnet4" }
+        ]
+      }
+    },
+
+    "PublicSubnet6" : {
+      "DependsOn" : ["VPC"],
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Public6", "CIDR" ]},
+        "Tags" : [
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+          { "Key" : "Network", "Value" : "Public6" },
+      	  { "Key" : "Name", "Value" : "Public Subnet6" }
         ]
       }
     },
@@ -170,6 +186,37 @@
       }
     },
 
+    "PublicRouteTable6" : {
+      "DependsOn" : ["VPC"],
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+          { "Key" : "Network", "Value" : "Public6" }
+        ]
+      }
+    },
+
+    "PublicRoute6" : {
+      "DependsOn" : ["PublicRouteTable6", "InternetGateway"],
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable6" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "PublicSubnetRouteTableAssociation6" : {
+      "DependsOn" : ["PublicSubnet6", "PublicRouteTable6"],
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet6" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable6" }
+      }
+    },
+
     "PrivateSubnet1" : {
       "DependsOn" : ["VPC"],
       "Type" : "AWS::EC2::Subnet",
@@ -237,6 +284,41 @@
       "Properties" : {
         "SubnetId" : { "Ref" : "PrivateSubnet3" },
         "RouteTableId" : { "Ref" : "PrivateRouteTable3" }
+      }
+    },
+
+    "PrivateSubnet5" : {
+      "DependsOn" : ["VPC"],
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Private5", "CIDR" ]},
+        "Tags" : [
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+          { "Key" : "Network", "Value" : "Private5" },
+      	  { "Key" : "Name", "Value" : "Private Subnet5" }
+        ]
+      }
+    },
+
+    "PrivateRouteTable5" : {
+      "DependsOn" : ["VPC"],
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackName" } },
+          { "Key" : "Network", "Value" : "Private5" }
+        ]
+      }
+    },
+
+    "PrivateSubnetRouteTableAssociation5" : {
+      "DependsOn" : ["PrivateSubnet5", "PrivateRouteTable5"],
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnet5" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable5" }
       }
     },
 
@@ -351,7 +433,7 @@
           "SubnetId"                 : { "Ref" : "PublicSubnet4" }
         }],
         "Tags" : [
-          { "Key" : "Name", "Value" : "NAT1" }
+          { "Key" : "Name", "Value" : "NAT2" }
               ],
         "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
           "#!/bin/bash\n",
@@ -368,6 +450,41 @@
         "DestinationCidrBlock" : "0.0.0.0/0",
         "InstanceId" : { "Ref" : "NAT2" }
       }
+    },
+
+    "NAT3" : {
+      "DependsOn" : ["PublicSubnet6", "NatSecurityGroup"],
+      "Type" : "AWS::EC2::Instance",
+      "Properties" : {
+        "InstanceType" : "t2.micro",
+        "KeyName"  : { "Ref" : "KeyPairName" },
+        "SourceDestCheck" : "false",
+        "ImageId" : { "Fn::FindInMap" : [ "NatRegionMap", { "Ref" : "AWS::Region" }, "AMI" ]},
+	"NetworkInterfaces" : [{
+          "GroupSet"                 : [{ "Ref" : "NatSecurityGroup" }],
+          "AssociatePublicIpAddress" : "true",
+          "DeviceIndex"              : "0",
+          "DeleteOnTermination"      : "true",
+          "SubnetId"                 : { "Ref" : "PublicSubnet6" }
+        }],
+        "Tags" : [
+          { "Key" : "Name", "Value" : "NAT3" }
+              ],
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash\n",
+          "yum update -y && yum install -y yum-cron && chkconfig yum-cron on"
+        ]]}}
+      }
+    },
+
+    "PrivateRoute3" : {
+      "DependsOn" : ["PrivateRouteTable5", "NAT3"],
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTable5" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "InstanceId" : { "Ref" : "NAT3" }
+      }
     }
 
   },
@@ -380,6 +497,10 @@
     "NAT2IP" : {
       "Description" : "NAT2 IP address",
       "Value" : { "Fn::GetAtt" : [ "NAT2", "PublicIp" ] }
+    },
+    "NAT3IP" : {
+      "Description" : "NAT3 IP address",
+      "Value" : { "Fn::GetAtt" : [ "NAT3", "PublicIp" ] }
     }
   }
   
