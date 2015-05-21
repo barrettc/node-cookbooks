@@ -42,17 +42,17 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "VPC" : {
-      "Default":"vpc-aebd8dcb",
+      "Default":"vpc-63a99906",
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
     "PrivateSubnets" : {
-      "Default":"subnet-4b417d71,subnet-56417d6c,subnet-6eb13845",
+      "Default":"subnet-024bc229,subnet-c00143b7,subnet-2425437d",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
     "PublicSubnets" : {
-      "Default":"subnet-54417d6e,subnet-6db13846,subnet-57417d6d",
+      "Default":"subnet-074bc22c,subnet-ce0143b9,subnet-2725437e",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
@@ -92,8 +92,11 @@
             "config":{
               "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
               "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
-            }
+            },
+            "collection_name": "this-is-dumb",
+            "cluster_name": false
           },
+                  
           "mongodb-opsworks" : {
             "sharded" : true
           },
@@ -134,7 +137,7 @@
         "Name": { "Ref" : "AppName" },
         "CustomRecipes":{
           "Setup" : ["mongodb::mongodb_org_repo"],
-          "Configure" : ["mongodb-opsworks::default", "mongod::mongos"]
+          "Configure" : ["mongodb-opsworks::default", "mongodb::mongos"]
         },
         "Type": "nodejs-app",
         "Shortname": { "Ref" : "AppName" },
@@ -248,9 +251,9 @@
       "Type": "AWS::OpsWorks::Layer",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": "mongo-replicaset-shardA",
+        "Name": "mongo-replicaset-shard-a",
         "Type": "custom",
-        "Shortname": "shardA",
+        "Shortname": "shard-a",
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
@@ -311,15 +314,15 @@
       "Type": "AWS::OpsWorks::Layer",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": { "Ref" : "AppName" },
-        "Type": "nodejs-app",
-        "Shortname": { "Ref" : "AppName" },
+        "Name": "mongo-cfg",
+        "Type": "custom",
+        "Shortname": "mongo-cfg",
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
         "CustomRecipes":{
           "Setup" : ["mongodb::mongodb_org_repo"],
-          "Config" : ["mongodb-opsworks::default", "mongod::configserver"]
+          "Configure" : ["mongodb-opsworks::default", "mongodb::configserver"]
         },
         "CustomSecurityGroupIds" : [          
           { "Ref" : "mongoSecurityGroup" }

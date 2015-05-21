@@ -515,6 +515,10 @@
     "PublicSubnets" : {
       "Description" : "Public subnets for use in other templates",
       "Value" : { "Fn::Join" : [",", [ { "Ref" : "PublicSubnet2" }, { "Ref" : "PublicSubnet4" }, { "Ref" : "PublicSubnet6" } ]] }
+    },
+    "VPCID": {
+      "Description": "VPC ID",
+      "Value" : { "Ref": "VPC" }
     }
   }
   
