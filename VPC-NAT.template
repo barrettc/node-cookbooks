@@ -507,7 +507,7 @@
     "NAT3IP" : {
       "Description" : "NAT3 IP address",
       "Value" : { "Fn::GetAtt" : [ "NAT3", "PublicIp" ] }
-    }
+    },
     "PrivateSubnets" : {
       "Description" : "Private subnets for use in other templates",
       "Value" : { "Fn::Join" : [",", [ { "Ref" : "PrivateSubnet1" }, { "Ref" : "PrivateSubnet3" }, { "Ref" : "PrivateSubnet5" } ]] }
