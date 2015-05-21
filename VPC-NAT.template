@@ -67,6 +67,7 @@
       "DependsOn" : ["VPC"],
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : {"Fn::Select":["0",{"Fn::GetAZs" : { "Ref" : "AWS::Region" }}] },
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Public2", "CIDR" ]},
         "Tags" : [
@@ -81,6 +82,7 @@
       "DependsOn" : ["VPC"],
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : {"Fn::Select":["1",{"Fn::GetAZs" : { "Ref" : "AWS::Region" }}] },
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Public4", "CIDR" ]},
         "Tags" : [
@@ -95,6 +97,7 @@
       "DependsOn" : ["VPC"],
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : {"Fn::Select":["2",{"Fn::GetAZs" : { "Ref" : "AWS::Region" }}] },
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Public6", "CIDR" ]},
         "Tags" : [
@@ -221,6 +224,7 @@
       "DependsOn" : ["VPC"],
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : {"Fn::Select":["0",{"Fn::GetAZs" : { "Ref" : "AWS::Region" }}] },
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Private1", "CIDR" ]},
         "Tags" : [
@@ -256,6 +260,7 @@
       "DependsOn" : ["VPC"],
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : {"Fn::Select":["1",{"Fn::GetAZs" : { "Ref" : "AWS::Region" }}] },
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Private3", "CIDR" ]},
         "Tags" : [
@@ -291,6 +296,7 @@
       "DependsOn" : ["VPC"],
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : {"Fn::Select":["2",{"Fn::GetAZs" : { "Ref" : "AWS::Region" }}] },
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : { "Fn::FindInMap" : [ "SubnetConfig", "Private5", "CIDR" ]},
         "Tags" : [
@@ -501,6 +507,14 @@
     "NAT3IP" : {
       "Description" : "NAT3 IP address",
       "Value" : { "Fn::GetAtt" : [ "NAT3", "PublicIp" ] }
+    }
+    "PrivateSubnets" : {
+      "Description" : "Private subnets for use in other templates",
+      "Value" : { "Fn::Join" : [",", [ { "Ref" : "PrivateSubnet1" }, { "Ref" : "PrivateSubnet3" }, { "Ref" : "PrivateSubnet5" } ]] }
+    },
+    "PublicSubnets" : {
+      "Description" : "Public subnets for use in other templates",
+      "Value" : { "Fn::Join" : [",", [ { "Ref" : "PublicSubnet2" }, { "Ref" : "PublicSubnet4" }, { "Ref" : "PublicSubnet6" } ]] }
     }
   }
   

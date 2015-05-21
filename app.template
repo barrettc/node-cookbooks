@@ -42,17 +42,17 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "VPC" : {
-      "Default":"vpc-17182872",
+      "Default":"vpc-aebd8dcb",
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
     "PrivateSubnets" : {
-      "Default":"subnet-dd94d7aa",
+      "Default":"subnet-4b417d71,subnet-56417d6c,subnet-6eb13845",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
     "PublicSubnets" : {
-      "Default":"subnet-db94d7ac",
+      "Default":"subnet-54417d6e,subnet-6db13846,subnet-57417d6d",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
@@ -137,7 +137,7 @@
     },
      "appInstance": {
       "Type": "AWS::OpsWorks::Instance",
-      "DependsOn":["mongocfg1","mongocfg2","mongocfg3"],
+      "DependsOn":["mongocfg0","mongocfg1","mongocfg2"],
       "Properties": {
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "appLayer" } ],
@@ -153,7 +153,7 @@
       "Properties": {
         "CrossZone" : "true",
         "SecurityGroups": [ { "Ref": "ELBSecurityGroup" } ],
-        "Subnets": [ { "Ref": "PublicSubnets" } ],
+        "Subnets": { "Ref": "PublicSubnets" },
         "Listeners": [ {
           "LoadBalancerPort": "80",
           "InstancePort": "80",
@@ -233,11 +233,11 @@
         ]
       }
     },
-    "mongo-replicaset-shardA": {
+    "mongoShardA": {
       "Type": "AWS::OpsWorks::Layer",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": "shardA",
+        "Name": "mongoShardA",
         "Type": "custom",
         "Shortname": "shardA",
         "EnableAutoHealing": "true",
@@ -264,7 +264,7 @@
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "LayerIds": [ { "Ref": "mongo-replicaset-shardA" } ],
+        "LayerIds": [ { "Ref": "mongoShardA" } ],
         "InstallUpdatesOnBoot": false,
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",
@@ -276,7 +276,7 @@
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "LayerIds": [ { "Ref": "mongo-replicaset-shardA" } ],
+        "LayerIds": [ { "Ref": "mongoShardA" } ],
         "InstallUpdatesOnBoot": false,
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",
@@ -288,7 +288,7 @@
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "LayerIds": [ { "Ref": "mongo-replicaset-shardA" } ],
+        "LayerIds": [ { "Ref": "mongoShardA" } ],
         "InstallUpdatesOnBoot": false,
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",
