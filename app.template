@@ -237,7 +237,7 @@
       "Type": "AWS::OpsWorks::Layer",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": "mongoShardA",
+        "Name": "mongo-replicaset-shardA",
         "Type": "custom",
         "Shortname": "shardA",
         "EnableAutoHealing": "true",
