@@ -42,17 +42,17 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "VPC" : {
-      "Default":"vpc-aebd8dcb",
+      "Default":"vpc-63a99906",
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
     "PrivateSubnets" : {
-      "Default":"subnet-4b417d71,subnet-56417d6c,subnet-6eb13845",
+      "Default":"subnet-024bc229,subnet-c00143b7,subnet-2425437d",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
     "PublicSubnets" : {
-      "Default":"subnet-54417d6e,subnet-6db13846,subnet-57417d6d",
+      "Default":"subnet-074bc22c,subnet-ce0143b9,subnet-2725437e",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
@@ -301,7 +301,7 @@
       "Properties": {
         "StackId": { "Ref": "stack" },
         "Name": { "Ref" : "AppName" },
-        "Type": "nodejs-app",
+        "Type": "custom",
         "Shortname": { "Ref" : "AppName" },
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
