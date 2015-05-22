@@ -40,9 +40,6 @@
 [submodule "mongodb-opsworks"]
 	path = mongodb-opsworks
 	url = https://github.com/rwilcox/mongodb-opsworks.git
-[submodule "runit"]
-	path = runit
-	url = https://github.com/hw-cookbooks/runit.git
 [submodule "opsworks_rabbitmq"]
 	path = opsworks_rabbitmq
 	url = https://github.com/verdigris-cookbooks/opsworks-rabbitmq.git
