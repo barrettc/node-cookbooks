@@ -63,7 +63,7 @@
     },
     "CassandraPath" : {
       "Default":"/data",
-      "Description" : "where the mongo stuff goes ",
+      "Description" : "where the cassandra stuff goes ",
       "Type" : "String"
     }
   },
@@ -448,7 +448,7 @@
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
         "CustomRecipes":{
-          "Setup" : ["cassandra-opsworks::default","cassandra::tarball"]
+          "Setup" : ["cassandra-opsworks::default","cassandra::datastax"]
         },
         "CustomSecurityGroupIds" : [          
           { "Ref" : "cassandraSecurityGroup" }
