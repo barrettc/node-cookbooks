@@ -22,9 +22,6 @@
 [submodule "mongodb"]
 	path = mongodb
 	url = https://github.com/edelight/chef-mongodb.git
-[submodule "mongodb-opsworks"]
-	path = mongodb-opsworks
-	url = https://github.com/appriss/mongodb-opsworks.git
 [submodule "cassandra"]
 	path = cassandra
 	url = https://github.com/michaelklishin/cassandra-chef-cookbook.git
