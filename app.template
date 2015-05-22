@@ -88,6 +88,15 @@
             "root_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"db"]]},
             "log_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"logs"]]}
           },
+          "rabbitmq": {
+            "policies": {
+              "ha-all-queues": {
+                "pattern": ".*",
+                "params": { "ha-mode": "all" },
+                "priority": 0
+              }
+            }
+          },
           "mongodb":{
             "config":{
               "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
@@ -230,8 +239,8 @@
            }
         ]
       }
-    }
-    ,
+    },
+
     "mongoSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
@@ -242,6 +251,60 @@
              "IpProtocol": "tcp",
              "FromPort": "27017",
              "ToPort": "27017",
+             "CidrIp": "0.0.0.0/0"
+           }
+        ]
+      }
+    },
+    "cassandraSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "7000",
+             "ToPort": "7001",
+             "CidrIp": "0.0.0.0/0"
+           },
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "7199",
+             "ToPort": "7199",
+             "CidrIp": "0.0.0.0/0"
+           },
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "9042",
+             "ToPort": "9042",
+             "CidrIp": "0.0.0.0/0"
+           }
+        ]
+      }
+    },
+    "rabbitSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "4369",
+             "ToPort": "4369",
+             "CidrIp": "0.0.0.0/0"
+           },
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "35197",
+             "ToPort": "35197",
+             "CidrIp": "0.0.0.0/0"
+           },
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "5672",
+             "ToPort": "5672",
              "CidrIp": "0.0.0.0/0"
            }
         ]
@@ -388,7 +451,7 @@
           "Setup" : ["cassandra-opsworks::default","cassandra::tarball"]
         },
         "CustomSecurityGroupIds" : [          
-          { "Ref" : "mongoSecurityGroup" }
+          { "Ref" : "cassandraSecurityGroup" }
         ],
         "VolumeConfigurations" : [
           {
@@ -437,6 +500,61 @@
       }
     },
 
+    "rabbitmq": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "rabbitmq",
+        "Type": "custom",
+        "Shortname": "rabbitmq",
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomRecipes":{
+          "Setup" : ["opsworks_rabbitmq::install"]
+        },
+        "CustomSecurityGroupIds" : [          
+          { "Ref" : "rabbitSecurityGroup" }
+        ]
+      }
+    },
+     "rabbitmq0": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "rabbitmq" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "rabbitmq1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "rabbitmq" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "rabbitmq2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "rabbitmq" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    
     "OpsWorksInstanceRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
