@@ -43,3 +43,6 @@
 [submodule "mongodb-opsworks"]
 	path = mongodb-opsworks
 	url = https://github.com/rwilcox/mongodb-opsworks.git
+[submodule "runit"]
+	path = runit
+	url = https://github.com/cookbooks/runit.git
