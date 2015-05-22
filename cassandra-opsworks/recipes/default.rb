@@ -6,11 +6,11 @@
 
 node['opsworks']['instance']['layers'].each do |layer|
 	Chef::Log.info("set cluster_name for #{layer}.")
-	node[:cassandra][:cluster_name] = node['opsworks']['layers'][layer]['name']
+	node.normal[:cassandra][:cluster_name] = node['opsworks']['layers'][layer]['name']
 end
 
 node[:opsworks][:instance][:layers].each do |layer,config|
-	node[:cassandra][:seeds] = node[layer]["node"]["ips"]
+	node.normal[:cassandra][:seeds] = node[layer]["node"]["ips"]
 end
 
 
