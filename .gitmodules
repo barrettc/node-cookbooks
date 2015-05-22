@@ -40,3 +40,6 @@
 [submodule "rabbitmq"]
 	path = rabbitmq
 	url = https://github.com/jjasghar/rabbitmq.git
+[submodule "mongodb-opsworks"]
+	path = mongodb-opsworks
+	url = https://github.com/rwilcox/mongodb-opsworks.git
