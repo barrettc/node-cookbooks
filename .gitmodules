@@ -34,9 +34,6 @@
 [submodule "ark"]
 	path = ark
 	url = https://github.com/burtlo/ark.git
-[submodule "opsworks-rabbitmq"]
-	path = opsworks-rabbitmq
-	url = https://github.com/verdigris-cookbooks/opsworks-rabbitmq.git
 [submodule "rabbitmq"]
 	path = rabbitmq
 	url = https://github.com/jjasghar/rabbitmq.git
@@ -46,3 +43,6 @@
 [submodule "runit"]
 	path = runit
 	url = https://github.com/hw-cookbooks/runit.git
+[submodule "opsworks_rabbitmq"]
+	path = opsworks_rabbitmq
+	url = https://github.com/verdigris-cookbooks/opsworks-rabbitmq.git
