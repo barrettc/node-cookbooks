@@ -8,10 +8,14 @@ node['opsworks']['instance']['layers'].each do |layer|
 	Chef::Log.info("set cluster_name for #{layer}.")
 	node.normal[:cassandra][:cluster_name] = node['opsworks']['layers'][layer]['name']
 end
-
+seeds = []
 node[:opsworks][:instance][:layers].each do |layer,config|
-	node.normal[:cassandra][:seeds] = node[layer]["node"]["ips"]
+  node[:opsworks][:layers][layer][:instances].each do |instanceName,instance|
+    Chef::Log.info("pusing ip for #{instanceName}.")
+    seeds.push(instance[:private_id])
+  end
 end
+node.normal[:cassandra][:seeds]=seeds
 
 
 
