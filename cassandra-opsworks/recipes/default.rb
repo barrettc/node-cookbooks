@@ -12,7 +12,7 @@ seeds = []
 node[:opsworks][:instance][:layers].each do |layer,config|
   node[:opsworks][:layers][layer][:instances].each do |instanceName,instance|
     Chef::Log.info("pusing ip for #{instanceName}.")
-    seeds.push(instance[:private_id])
+    seeds.push(instance[:private_ip])
   end
 end
 node.normal[:cassandra][:seeds]=seeds
