@@ -97,6 +97,10 @@
               }
             }
           },
+          "mongodb-opsworks":{
+            "configsvr_layer":"mongo-cfg",
+            "mongos_layer":{ "Ref" : "AppName" }
+          },
           "mongodb":{
             "config":{
               "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
