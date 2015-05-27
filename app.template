@@ -97,10 +97,6 @@
               }
             }
           },
-          "mongodb-opsworks":{
-            "configsvr_layer":"mongo-cfg",
-            "mongos_layer":{ "Ref" : "AppName" }
-          },
           "mongodb":{
             "config":{
               "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
@@ -111,7 +107,9 @@
           },
                   
           "mongodb-opsworks" : {
-            "sharded" : true
+            "sharded" : true,
+            "configsvr_layer":"mongo-cfg",
+            "mongos_layer":{ "Ref" : "AppName" }
           },
           "environment_variables":{
             "PORT":80
