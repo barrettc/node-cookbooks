@@ -164,7 +164,7 @@
     },
      "appInstance": {
       "Type": "AWS::OpsWorks::Instance",
-      "DependsOn":["mongocfg0","mongocfg1","mongocfg2"],
+      "DependsOn":["mongocfg0","mongocfg1","mongocfg2","cassandraClusterA0","cassandraClusterA1","cassandraClusterA2","rabbitmq0","rabbitmq1","rabbitmq2"],
       "Properties": {
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "appLayer" } ],
