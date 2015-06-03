@@ -514,7 +514,8 @@
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
         "CustomRecipes":{
-          "Setup" : ["opsworks_rabbitmq::install"]
+          "Setup": [ "opsworks_rabbitmq::install" ],
+          "Configure":["opsworks_rabbitmq::configure","opsworks_rabbitmq::cluster","opsworks_rabbitmq::policy_management"]
         },
         "CustomSecurityGroupIds" : [          
           { "Ref" : "rabbitSecurityGroup" }
