@@ -1,4 +1,4 @@
-name             'cassandra-opsworks'
+name             'opsworks_cassandra'
 maintainer       'Jonathan Kamke'
 maintainer_email 'jonathan.kamke@scispike.com'
 description      'Prepares an OpsWorks stack to run the cassandra recipe'
