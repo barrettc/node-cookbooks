@@ -30,7 +30,7 @@
       "Description": "Where the cookbooks are stored"
     },
     "AppRepo": {
-      "Default" : "https://s3.amazonaws.com/ppm-app2/helloworld-1.0.0.tgz",
+      "Default" : "https://s3.amazonaws.com/groovice/helloworld-1.0.0.tgz",
       "Type" : "String",
       "Description": "Where the npm application code is stored"
     },
@@ -43,17 +43,17 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "VPC" : {
-      "Default":"vpc-63a99906",
+      "Default":"vpc-e2ebfc87",
       "Description" : "Id of the VPC to Launch into",
       "Type" : "String"
     },
     "PrivateSubnets" : {
-      "Default":"subnet-024bc229,subnet-c00143b7,subnet-2425437d",
+      "Default":"subnet-caff9ce1,subnet-424a6d35,subnet-3c205965",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
     "PublicSubnets" : {
-      "Default":"subnet-074bc22c,subnet-ce0143b9,subnet-2725437e",
+      "Default":"subnet-c3ff9ce8,subnet-364a6d41,subnet-3b205962",
       "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
       "Type" : "CommaDelimitedList"
     },
@@ -104,7 +104,7 @@
             "kernel": {
               "inet_dist_listen_min": 25672,
               "inet_dist_listen_max": 25672
-            }
+            },
             "policies": {
               "ha-all-queues": {
                 "pattern": ".*",
@@ -125,7 +125,7 @@
           "mongodb-opsworks" : {
             "sharded" : true,
             "configsvr_layer":"mongo-cfg",
-            "mongos_layer":{ "Ref" : "AppName" }
+            "mongos_layer":"conversation_app"
           },
           "deploy":{
             "conversation_app":{
@@ -170,7 +170,7 @@
           "Configure" : ["mongodb-opsworks::default", "mongodb::mongos","opsworks_cassandra::app","opsworks_rabbitmq::app","opsworks_nodejs::create_env_file"]
         },
         "Type": "nodejs-app",
-        "Shortname": { "Ref" : "AppName" },
+        "Shortname": "conversation_app",
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
