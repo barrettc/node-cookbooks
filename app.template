@@ -2,11 +2,6 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Launches OpsWorks stack, layer, instances and associated resources to run the application.",
   "Parameters": {
-    "AppName":{
-      "Type":"String",
-      "Default":"app",
-      "Description":"What to call the app"
-    },
     "DefaultOs" : {
       "Description" : "The os for the app",
       "Type" : "String",
@@ -106,16 +101,18 @@
             "collection_name": "this-is-dumb",
             "cluster_name": false
           },
-                  
           "mongodb-opsworks" : {
             "sharded" : true,
             "configsvr_layer":"mongo-cfg",
             "mongos_layer":{ "Ref" : "AppName" }
           },
-          "environment_variables":{
-            "PORT":80
+          "deploy":{
+            "conversation_app":{
+              "environment_variables":{
+                "PORT":80
+              }
+            }
           },
-   
           "amazon" : {
             "region" : { "Ref" : "AWS::Region" }
           }
@@ -133,7 +130,7 @@
       "Type": "AWS::OpsWorks::App",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": { "Ref" : "AppName" },
+        "Name": "conversation_app",
         "Type": "nodejs",
         "AppSource": {
           "Type": "archive",
@@ -146,7 +143,7 @@
       "DependsOn": "app",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "Name": { "Ref" : "AppName" },
+        "Name": "conversation_app",
         "CustomRecipes":{
           "Setup" : ["mongodb::mongodb_org_repo"],
           "Configure" : ["mongodb-opsworks::default", "mongodb::mongos","opsworks_cassandra::app","opsworks_rabbitmq::app","opsworks_nodejs::create_env_file"]
