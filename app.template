@@ -90,7 +90,7 @@
           "Name" : "Chef",
           "Version" : "11.10"
         },
-        "ServiceRoleArn": { "Fn::Join": ["", ["arn:aws:iam::", {"Ref":"AWS::AccountId"}, ":role/aws-opsworks-service-role"]] },
+        "ServiceRoleArn": { "Fn::GetAtt": [ "OpsWorksServiceRole", "Arn" ] },
         "DefaultInstanceProfileArn": { "Fn::GetAtt": [ "OpsWorksInstanceProfile", "Arn" ] },
         "CustomJson": {
           "cassandra":{
@@ -619,7 +619,41 @@
         "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
       }
     },
-    
+    "OpsWorksServiceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": [ "ec2.amazonaws.com","opsworks.amazonaws.com" ] },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "opsworks-service",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                             "cloudwatch:GetMetricStatistics",
+                             "ec2:*",
+                             "elasticloadbalancing:*",
+                             "iam:PassRole",
+                             "rds:*"
+                           ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
     "OpsWorksInstanceRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
