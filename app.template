@@ -13,9 +13,15 @@
       "Default": "20"
     },
     "InstanceType" : {
-      "Description" : "NET Device EC2 instance type",
+      "Description" : "C2 instance type",
       "Type" : "String",
       "Default" : "t2.medium",
+      "ConstraintDescription" : "must be a valid EC2 instance type."
+    },
+    "CassandraInstanceType" : {
+      "Description" : "Cassandra's EC2 instance type",
+      "Type" : "String",
+      "Default" : "r3.large",
       "ConstraintDescription" : "must be a valid EC2 instance type."
     },
     "GitCookbookRepo": {
@@ -62,6 +68,16 @@
       "Type" : "String"
     }
   },
+  "Conditions":{
+    "UseCassandraVolume" : {
+      "Fn::Not" : [{
+         "Fn::Equals" : [
+            {"Ref" : "CassandraPath"},
+            "/mnt"
+         ]
+      }]
+   }
+  },
   "Resources": {
     "stack": {
       "Type": "AWS::OpsWorks::Stack",
@@ -78,12 +94,17 @@
         "DefaultInstanceProfileArn": { "Fn::GetAtt": [ "OpsWorksInstanceProfile", "Arn" ] },
         "CustomJson": {
           "cassandra":{
+            "package_name": "dsc21",
             "install_java":true,
             "snitch":"Ec2Snitch",
             "root_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"db"]]},
             "log_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"logs"]]}
           },
           "rabbitmq": {
+            "kernel": {
+              "inet_dist_listen_min": 25672,
+              "inet_dist_listen_max": 25672
+            }
             "policies": {
               "ha-all-queues": {
                 "pattern": ".*",
@@ -199,6 +220,33 @@
         "LayerId": { "Ref": "appLayer" }
       }
     },
+    "RabbitmqELB": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "CrossZone" : "true",
+        "SecurityGroups": [ { "Ref": "rabbitSecurityGroup" } ],
+        "Subnets": {"Ref" : "PrivateSubnets"},
+        "Listeners": [ {
+          "LoadBalancerPort": "5672",
+          "InstancePort": "5672",
+          "Protocol": "HTTP"
+        } ],
+        "HealthCheck": {
+          "Target": "HTTP:5672/",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5",
+          "Interval": "90",
+          "Timeout": "60"
+        }
+      }
+    },
+    "RabbitmqELBAttachment": {
+      "Type": "AWS::OpsWorks::ElasticLoadBalancerAttachment",
+      "Properties": {
+        "ElasticLoadBalancerName": { "Ref": "ELB" },
+        "LayerId": { "Ref": "rabbitmq" }
+      }
+    },
 
     "ELBSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
@@ -297,8 +345,8 @@
            },
            {
              "IpProtocol": "tcp",
-             "FromPort": "35197",
-             "ToPort": "35197",
+             "FromPort": "25672",
+             "ToPort": "25672",
              "CidrIp": "0.0.0.0/0"
            },
            {
@@ -469,7 +517,8 @@
         ],
         "VolumeConfigurations" : [
           {
-            "MountPoint" : {"Ref":"MongoPath"},
+            "Condition":"UseCassandraVolume",
+            "MountPoint" : {"Ref":"CassandraPath"},
             "NumberOfDisks" : 2,
             "RaidLevel" : 1,
             "Size" : { "Ref" : "StorageSize" }
@@ -483,7 +532,7 @@
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "cassandraClusterA" },{ "Ref": "cassandraSeeds" } ],
         "InstallUpdatesOnBoot": false,
-        "InstanceType": { "Ref" : "InstanceType" },
+        "InstanceType": { "Ref" : "CassandraInstanceType" },
         "RootDeviceType": "ebs",
         "Architecture": "x86_64",
         "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
@@ -496,7 +545,7 @@
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "cassandraClusterA" } ],
         "InstallUpdatesOnBoot": false,
-        "InstanceType": { "Ref" : "InstanceType" },
+        "InstanceType": { "Ref" : "CassandraInstanceType" },
         "RootDeviceType": "ebs",
         "Architecture": "x86_64",
         "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
@@ -508,7 +557,7 @@
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "cassandraClusterA" } ],
         "InstallUpdatesOnBoot": false,
-        "InstanceType": { "Ref" : "InstanceType" },
+        "InstanceType": { "Ref" : "CassandraInstanceType" },
         "RootDeviceType": "ebs",
         "Architecture": "x86_64",
         "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
