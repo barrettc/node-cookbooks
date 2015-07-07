@@ -149,7 +149,7 @@
         "Name": { "Ref" : "AppName" },
         "CustomRecipes":{
           "Setup" : ["mongodb::mongodb_org_repo"],
-          "Configure" : ["mongodb-opsworks::default", "mongodb::mongos"]
+          "Configure" : ["mongodb-opsworks::default", "mongodb::mongos","opsworks_cassandra::app","opsworks_rabbitmq::app","opsworks_nodejs::create_env_file"]
         },
         "Type": "nodejs-app",
         "Shortname": { "Ref" : "AppName" },
@@ -439,7 +439,21 @@
         "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
       }
     },
-    
+    "cassandraSeeds": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "cassandra-seeds",
+        "Type": "custom",
+        "Shortname": "cassandra-seeds",
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomSecurityGroupIds" : [          
+          { "Ref" : "cassandraSecurityGroup" }
+        ]
+      }
+    },
     "cassandraClusterA": {
       "Type": "AWS::OpsWorks::Layer",
       "Properties": {
@@ -470,7 +484,7 @@
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "StackId": { "Ref": "stack" },
-        "LayerIds": [ { "Ref": "cassandraClusterA" } ],
+        "LayerIds": [ { "Ref": "cassandraClusterA" },{ "Ref": "cassandraSeeds" } ],
         "InstallUpdatesOnBoot": false,
         "InstanceType": { "Ref" : "InstanceType" },
         "RootDeviceType": "ebs",

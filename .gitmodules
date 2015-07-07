@@ -34,12 +34,12 @@
 [submodule "ark"]
 	path = ark
 	url = https://github.com/burtlo/ark.git
-[submodule "rabbitmq"]
-	path = rabbitmq
-	url = https://github.com/jjasghar/rabbitmq.git
 [submodule "mongodb-opsworks"]
 	path = mongodb-opsworks
 	url = https://github.com/rwilcox/mongodb-opsworks.git
 [submodule "opsworks_rabbitmq"]
 	path = opsworks_rabbitmq
-	url = https://github.com/verdigris-cookbooks/opsworks-rabbitmq.git
+	url = https://github.com/SciSpike/opsworks_rabbitmq.git
+[submodule "rabbitmq"]
+	path = rabbitmq
+	url = https://github.com/SciSpike/rabbitmq.git
