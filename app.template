@@ -517,7 +517,6 @@
         ],
         "VolumeConfigurations" : [
           {
-            "Condition":"UseCassandraVolume",
             "MountPoint" : {"Ref":"CassandraPath"},
             "NumberOfDisks" : 2,
             "RaidLevel" : 1,
