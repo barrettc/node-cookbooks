@@ -243,7 +243,7 @@
     "RabbitmqELBAttachment": {
       "Type": "AWS::OpsWorks::ElasticLoadBalancerAttachment",
       "Properties": {
-        "ElasticLoadBalancerName": { "Ref": "ELB" },
+        "ElasticLoadBalancerName": { "Ref": "RabbitmqELB" },
         "LayerId": { "Ref": "rabbitmq" }
       }
     },
