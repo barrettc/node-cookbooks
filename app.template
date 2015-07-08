@@ -651,6 +651,18 @@
                 }
               ]
             }
+          },
+          {
+            "PolicyName": "s3",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:GetObject",
+                  "Resource": { "Fn::Join": [ "", ["arn:aws:s3:::", { "Ref" : "AppRepo" }]] }
+                }
+              ]
+            }
           }
         ]
       }
