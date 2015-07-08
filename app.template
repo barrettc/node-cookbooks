@@ -30,9 +30,9 @@
       "Description": "Where the cookbooks are stored"
     },
     "AppRepo": {
-      "Default" : "groovice/helloworld-1.0.0.tgz",
+      "Default" : "https://s3.amazonaws.com/groovice/helloworld-1.0.0.tgz",
       "Type" : "String",
-      "Description": "s3 bucket name/app archive"
+      "Description": "Where the npm application code is stored"
     },
     "DefaultKeyPair" : {
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
@@ -156,8 +156,8 @@
         "Name": "conversation_app",
         "Type": "nodejs",
         "AppSource": {
-          "Type": "s3",
-          "Url": { "Fn::Join": [ "", ["https://s3.amazonaws.com/", { "Ref" : "AppRepo" }]] }
+          "Type": "archive",
+          "Url": { "Ref" : "AppRepo" }
         }
       }
     },
@@ -677,18 +677,6 @@
                   "Effect": "Allow",
                   "Action": "ec2:*",
                   "Resource": "*"
-                }
-              ]
-            }
-          },
-          {
-            "PolicyName": "s3",
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": "s3:GetObject",
-                  "Resource": { "Fn::Join": [ "", ["arn:aws:s3:::", { "Ref" : "AppRepo" }]] }
                 }
               ]
             }
