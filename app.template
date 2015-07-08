@@ -95,6 +95,8 @@
         "CustomJson": {
           "cassandra":{
             "package_name": "dsc21",
+            "version": "2.1.7",
+            "release": "1",
             "install_java":true,
             "snitch":"Ec2Snitch",
             "root_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"db"]]},
