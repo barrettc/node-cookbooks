@@ -13,8 +13,3 @@ end
 node[:deploy].each do |application, deploy|
   node.set[:deploy][application][:environment_variables]["CASSANDRA_HOSTS"]=hosts.join(',')
 end
-
-node['opsworks']['instance']['layers'].each do |layer|
-  Chef::Log.info("set cluster_name for #{layer}.")
-  node.normal[:cassandra][:cluster_name] = node['opsworks']['layers'][layer]['name']
-end
