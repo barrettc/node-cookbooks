@@ -156,7 +156,7 @@
         "Name": "conversation_app",
         "Type": "nodejs",
         "AppSource": {
-          "Type": "archive",
+          "Type": "s3",
           "Url": { "Fn::Join": [ "", ["https://s3.amazonaws.com/", { "Ref" : "AppRepo" }]] }
         }
       }
@@ -648,18 +648,6 @@
                              "rds:*"
                            ],
                   "Resource": "*"
-                }
-              ]
-            }
-          },
-          {
-            "PolicyName": "s3",
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": "s3:GetObject",
-                  "Resource": { "Fn::Join": [ "", ["arn:aws:s3:::", { "Ref" : "AppRepo" }]] }
                 }
               ]
             }
