@@ -95,6 +95,8 @@
         "CustomJson": {
           "cassandra":{
             "package_name": "dsc21",
+            "version": "2.1.7",
+            "release": "1",
             "install_java":true,
             "snitch":"Ec2Snitch",
             "root_dir": { "Fn::Join": ["/",[{"Ref":"CassandraPath"},"db"]]},
@@ -179,7 +181,7 @@
         ]
       }
     },
-     "appInstance": {
+    "appInstance0": {
       "Type": "AWS::OpsWorks::Instance",
       "DependsOn":["mongocfg0","mongocfg1","mongocfg2","cassandraClusterA0","cassandraClusterA1","cassandraClusterA2","rabbitmq0","rabbitmq1","rabbitmq2"],
       "Properties": {
@@ -190,6 +192,32 @@
         "RootDeviceType": "ebs",
         "Architecture": "x86_64",
         "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "appInstance1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "DependsOn":["mongocfg0","mongocfg1","mongocfg2","cassandraClusterA0","cassandraClusterA1","cassandraClusterA2","rabbitmq0","rabbitmq1","rabbitmq2"],
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "appLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "appInstance2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "DependsOn":["mongocfg0","mongocfg1","mongocfg2","cassandraClusterA0","cassandraClusterA1","cassandraClusterA2","rabbitmq0","rabbitmq1","rabbitmq2"],
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "appLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
       }
     },
     "ELB": {
