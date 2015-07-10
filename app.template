@@ -257,10 +257,10 @@
         "Listeners": [ {
           "LoadBalancerPort": "5672",
           "InstancePort": "5672",
-          "Protocol": "HTTP"
+          "Protocol": "TCP"
         } ],
         "HealthCheck": {
-          "Target": "HTTP:5672/",
+          "Target": "TCP:5672",
           "HealthyThreshold": "3",
           "UnhealthyThreshold": "5",
           "Interval": "90",
