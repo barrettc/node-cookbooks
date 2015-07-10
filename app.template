@@ -121,8 +121,7 @@
               "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
             },
             "package_version": "2.6.4-1",
-            "collection_name": "this-is-dumb",
-            "cluster_name": false
+            "cluster_name": "conversation_mongodb_cluster"
           },
           "mongodb-opsworks" : {
             "sharded" : true,
