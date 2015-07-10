@@ -255,6 +255,7 @@
         "CrossZone" : "true",
         "SecurityGroups": [ { "Ref": "rabbitSecurityGroup" } ],
         "Subnets": {"Ref" : "PrivateSubnets"},
+        "Scheme":"internal",
         "Listeners": [ {
           "LoadBalancerPort": "5672",
           "InstancePort": "5672",
