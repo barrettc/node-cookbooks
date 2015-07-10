@@ -132,7 +132,8 @@
           "deploy":{
             "conversation_app":{
               "environment_variables":{
-                "PORT":80
+                "PORT":80,
+                "LOG_LEVEL":"silly"
               }
             }
           },
