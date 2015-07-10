@@ -539,7 +539,7 @@
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
         "CustomRecipes":{
-          "Setup" : ["opsworks_cassandra::default"]
+          "Configure" : ["opsworks_cassandra::default"]
         },
         "CustomSecurityGroupIds" : [          
           { "Ref" : "cassandraSecurityGroup" }
@@ -580,6 +580,7 @@
       }
     },
      "cassandraClusterA2": {
+      "DependsOn":["cassandraClusterA0"],
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "StackId": { "Ref": "stack" },
