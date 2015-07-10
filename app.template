@@ -579,6 +579,7 @@
       }
     },
      "cassandraClusterA2": {
+      "DependsOn":["cassandraClusterA0"],
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "StackId": { "Ref": "stack" },
