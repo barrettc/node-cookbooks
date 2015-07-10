@@ -538,7 +538,7 @@
         "AutoAssignElasticIps": "false",
         "AutoAssignPublicIps": "false",
         "CustomRecipes":{
-          "Setup" : ["opsworks_cassandra::default"]
+          "Configure" : ["opsworks_cassandra::default"]
         },
         "CustomSecurityGroupIds" : [          
           { "Ref" : "cassandraSecurityGroup" }
