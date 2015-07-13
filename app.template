@@ -21,7 +21,7 @@
     "CassandraInstanceType" : {
       "Description" : "Cassandra's EC2 instance type",
       "Type" : "String",
-      "Default" : "r3.large",
+      "Default" : "t2.small",
       "ConstraintDescription" : "must be a valid EC2 instance type."
     },
     "GitCookbookRepo": {
