@@ -143,7 +143,7 @@
         },
         "DefaultOs": { "Ref": "DefaultOs" },
         "UseCustomCookbooks": true,
-        "HostnameTheme": "Legendary_creatures_from_Japan",
+        "HostnameTheme": "Planets_and_Moons",
         "CustomCookbooksSource": {
           "Type": "git",
           "Url": { "Ref" : "GitCookbookRepo" },
