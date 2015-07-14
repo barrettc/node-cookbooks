@@ -143,6 +143,7 @@
         },
         "DefaultOs": { "Ref": "DefaultOs" },
         "UseCustomCookbooks": true,
+        "HostnameTheme": "Legendary_creatures_from_Japan",
         "CustomCookbooksSource": {
           "Type": "git",
           "Url": { "Ref" : "GitCookbookRepo" },
@@ -186,7 +187,6 @@
       "Type": "AWS::OpsWorks::Instance",
       "DependsOn":["mongocfg0","mongocfg1","mongocfg2","cassandraClusterA0","cassandraClusterA1","cassandraClusterA2","rabbitmq0","rabbitmq1","rabbitmq2"],
       "Properties": {
-        "Hostname": "nodejs-app0",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "appLayer" } ],
         "InstallUpdatesOnBoot": false,
@@ -200,7 +200,6 @@
       "Type": "AWS::OpsWorks::Instance",
       "DependsOn":["mongocfg0","mongocfg1","mongocfg2","cassandraClusterA0","cassandraClusterA1","cassandraClusterA2","rabbitmq0","rabbitmq1","rabbitmq2"],
       "Properties": {
-        "Hostname": "nodejs-app1",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "appLayer" } ],
         "InstallUpdatesOnBoot": false,
@@ -214,7 +213,6 @@
       "Type": "AWS::OpsWorks::Instance",
       "DependsOn":["mongocfg0","mongocfg1","mongocfg2","cassandraClusterA0","cassandraClusterA1","cassandraClusterA2","rabbitmq0","rabbitmq1","rabbitmq2"],
       "Properties": {
-        "Hostname": "nodejs-app2",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "appLayer" } ],
         "InstallUpdatesOnBoot": false,
@@ -421,7 +419,6 @@
      "shardA0": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "shard-a0",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "mongoShardA" } ],
         "InstallUpdatesOnBoot": false,
@@ -434,7 +431,6 @@
      "shardA1": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "shard-a1",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "mongoShardA" } ],
         "InstallUpdatesOnBoot": false,
@@ -447,7 +443,6 @@
      "shardA2": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "shard-a2",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "mongoShardA" } ],
         "InstallUpdatesOnBoot": false,
@@ -487,7 +482,6 @@
      "mongocfg0": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "mongo-cfg0",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
         "InstallUpdatesOnBoot": false,
@@ -500,7 +494,6 @@
      "mongocfg1": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "mongo-cfg1",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
         "InstallUpdatesOnBoot": false,
@@ -513,7 +506,6 @@
      "mongocfg2": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "mongo-cfg2",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
         "InstallUpdatesOnBoot": false,
@@ -567,7 +559,6 @@
      "cassandraClusterA0": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "cassandra-a0",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "cassandraClusterA" },{ "Ref": "cassandraSeeds" } ],
         "InstallUpdatesOnBoot": false,
@@ -581,7 +572,6 @@
       "DependsOn":["cassandraClusterA0"],
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "cassandra-a1",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "cassandraClusterA" } ],
         "InstallUpdatesOnBoot": false,
@@ -595,7 +585,6 @@
       "DependsOn":["cassandraClusterA0"],
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "cassandra-a2",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "cassandraClusterA" } ],
         "InstallUpdatesOnBoot": false,
@@ -628,7 +617,6 @@
      "rabbitmq0": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "rabbitmq0",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "rabbitmq" } ],
         "InstallUpdatesOnBoot": false,
@@ -641,7 +629,6 @@
      "rabbitmq1": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "rabbitmq1",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "rabbitmq" } ],
         "InstallUpdatesOnBoot": false,
@@ -654,7 +641,6 @@
      "rabbitmq2": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
-        "Hostname": "rabbitmq2",
         "StackId": { "Ref": "stack" },
         "LayerIds": [ { "Ref": "rabbitmq" } ],
         "InstallUpdatesOnBoot": false,
