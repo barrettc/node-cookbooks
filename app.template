@@ -125,6 +125,7 @@
           },
           "mongodb-opsworks" : {
             "sharded" : true,
+            "debug_objects": true,
             "configsvr_layer":"mongo-cfg",
             "mongos_layer":"conversation_app"
           },
