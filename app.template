@@ -120,7 +120,6 @@
               "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
               "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
             },
-            "package_version": "2.6.4-1",
             "cluster_name": "conversation_mongodb_cluster"
           },
           "mongodb-opsworks" : {
