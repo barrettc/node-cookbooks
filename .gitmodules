@@ -43,3 +43,6 @@
 [submodule "mongodb-opsworks"]
 	path = mongodb-opsworks
 	url = https://github.com/barrettc/mongodb-opsworks
+[submodule "nodejs-wrapper-opsworks"]
+	path = nodejs-wrapper-opsworks
+	url = git@github.com:zupper/nodejs-wrapper-opsworks.git
