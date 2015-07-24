@@ -172,8 +172,8 @@
         "StackId": { "Ref": "stack" },
         "Name": "conversation_app",
         "CustomRecipes":{
-          "Setup" : ["nodejs-wrapper-opsowrks, nodejs-wrapper-opsworks::create-symlink,mongodb::mongodb_org_repo"],
-          "Configure" : ["opsworks_nodejs::configure,mongodb-opsworks::default", "mongodb::mongos","opsworks_cassandra::app","opsworks_rabbitmq::app","opsworks_nodejs::create_env_file"]
+          "Setup" : ["mongodb::mongodb_org_repo", "nodejs-wrapper-opsworks", "nodejs-wrapper-opsworks::create-symlink"],
+          "Configure" : ["mongodb-opsworks::default", "mongodb::mongos","opsworks_cassandra::app","opsworks_rabbitmq::app","opsworks_nodejs::configure","opsworks_nodejs::create_env_file"]
         },
         "Type": "nodejs-app",
         "Shortname": "conversation_app",
