@@ -62,6 +62,22 @@
         ]
       }
     },
+    "S3Enpoint" : {
+      "Type" : "AWS::EC2::VPCEndpoint",
+      "Properties" : {
+        "PolicyDocument" : {
+          "Version":"2012-10-17",
+          "Statement":[{
+            "Effect":"Allow",
+            "Principal": "*",
+            "Action":"*"
+          }]
+        },
+        "RouteTableIds" : [ {"Ref" : "PublicRouteTable2"}, {"Ref" : "PublicRouteTable4"}, {"Ref" : "PublicRouteTable6"} ],
+        "ServiceName" : { "Fn::Join": [ "", [ "com.amazonaws.", { "Ref": "AWS::Region" }, ".s3" ] ] },
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
 
     "PublicSubnet2" : {
       "DependsOn" : ["VPC"],
