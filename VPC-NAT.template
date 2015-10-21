@@ -4,6 +4,12 @@
   "Description" : "CloudFormation template for a generic VPC with public and private subnets (with private network Internet access via NAT)",
 
   "Parameters" : {
+    "Tenancy" : {
+      "Description" : "This defines which type of tenancy you'd like. You can choose either dedicated or default",
+      "Type" : "String",
+      "Default" : "dedicated",
+      "AllowedValues" : [ "dedicated", "default"]
+    }
     
     "KeyPairName" : {
       "Description" : "Name of an existing EC2 KeyPair (find or create here: https://console.aws.amazon.com/ec2/v2/home#KeyPairs: )",
@@ -60,6 +66,22 @@
           { "Key" : "Network", "Value" : "Public" },
       	  { "Key" : "Name", "Value" : "NAT VPC" }
         ]
+      }
+    },
+    "S3Enpoint" : {
+      "Type" : "AWS::EC2::VPCEndpoint",
+      "Properties" : {
+        "PolicyDocument" : {
+          "Version":"2012-10-17",
+          "Statement":[{
+            "Effect":"Allow",
+            "Principal": "*",
+            "Action":"*"
+          }]
+        },
+        "RouteTableIds" : [ {"Ref" : "PrivateRouteTable1"}, {"Ref" : "PrivateRouteTable3"}, {"Ref" : "PrivateRouteTable5"} ],
+        "ServiceName" : { "Fn::Join": [ "", [ "com.amazonaws.", { "Ref": "AWS::Region" }, ".s3" ] ] },
+        "VpcId" : { "Ref" : "VPC" }
       }
     },
 
