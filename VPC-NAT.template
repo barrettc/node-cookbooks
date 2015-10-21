@@ -4,12 +4,6 @@
   "Description" : "CloudFormation template for a generic VPC with public and private subnets (with private network Internet access via NAT)",
 
   "Parameters" : {
-    "Tenancy" : {
-      "Description" : "This defines which type of tenancy you'd like. You can choose either dedicated or default",
-      "Type" : "String",
-      "Default" : "dedicated",
-      "AllowedValues" : [ "dedicated", "default"]
-    }
     
     "KeyPairName" : {
       "Description" : "Name of an existing EC2 KeyPair (find or create here: https://console.aws.amazon.com/ec2/v2/home#KeyPairs: )",
