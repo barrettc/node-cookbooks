@@ -70,7 +70,8 @@
           "Statement":[{
             "Effect":"Allow",
             "Principal": "*",
-            "Action":"*"
+            "Action":"*",
+            "Resource":"*"
           }]
         },
         "RouteTableIds" : [ {"Ref" : "PrivateRouteTable1"}, {"Ref" : "PrivateRouteTable3"}, {"Ref" : "PrivateRouteTable5"} ],
