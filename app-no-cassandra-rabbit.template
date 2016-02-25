@@ -1,0 +1,470 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Launches OpsWorks stack, layer, instances and associated resources to run the application.",
+  "Parameters": {
+    "DefaultOs" : {
+      "Description" : "The os for the app",
+      "Type" : "String",
+      "Default" : "Amazon Linux"
+    },
+    "StorageSize" : {
+      "Description" : "How big the secondary storage",
+      "Type" : "Number",
+      "Default": "20"
+    },
+    "InstanceType" : {
+      "Description" : "C2 instance type",
+      "Type" : "String",
+      "Default" : "t2.medium",
+      "ConstraintDescription" : "must be a valid EC2 instance type."
+    },
+    "GitCookbookRepo": {
+      "Default" : "https://github.com/barrettc/node-cookbooks.git",
+      "Type" : "String",
+      "Description": "Where the cookbooks are stored"
+    },
+    "AppRepo": {
+      "Default" : "https://s3.amazonaws.com/groovice/Groovice-0.0.1.tgz",
+      "Type" : "String",
+      "Description": "Where the npm application code is stored"
+    },
+    "DefaultKeyPair" : {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type" : "String",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern" : "[-_ a-zA-Z0-9]*",
+      "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
+    },
+    "VPC" : {
+      "Default":"vpc-cd337aa9",
+      "Description" : "Id of the VPC to Launch into",
+      "Type" : "String"
+    },
+    "PrivateSubnets" : {
+      "Default":"subnet-0720e32d,subnet-7c99240a,subnet-8f9047d7",
+      "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
+      "Type" : "CommaDelimitedList"
+    },
+    "PublicSubnets" : {
+      "Default":"subnet-0420e32e,subnet-7e992408,subnet-829047da",
+      "Description" : "for ppm one of: subnet-cc23ade7,subnet-53642724",
+      "Type" : "CommaDelimitedList"
+    },
+    "MongoPath" : {
+      "Default":"/data",
+      "Description" : "where the mongo stuff goes ",
+      "Type" : "String"
+    }
+  },
+  "Resources": {
+    "stack": {
+      "Type": "AWS::OpsWorks::Stack",
+      "Properties": {
+        "Name": { "Ref": "AWS::StackName" },
+        "VpcId" : { "Ref" : "VPC" },
+        "DefaultSubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] },
+        "DefaultSshKeyName" : { "Ref" : "DefaultKeyPair" },
+        "ConfigurationManager" : {
+          "Name" : "Chef",
+          "Version" : "11.10"
+        },
+        "ServiceRoleArn": { "Fn::GetAtt": [ "OpsWorksServiceRole", "Arn" ] },
+        "DefaultInstanceProfileArn": { "Fn::GetAtt": [ "OpsWorksInstanceProfile", "Arn" ] },
+        "CustomJson": {
+          "nodejs": {
+            "version": "0.12.7"
+          },
+          "mongodb":{
+            "config":{
+              "dbpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"db"]]},
+              "logpath":{ "Fn::Join": ["/",[{"Ref":"MongoPath"},"logs","mongodb.log"]]}
+            },
+            "cluster_name": "conversation_mongodb_cluster"
+          },
+          "mongodb-opsworks" : {
+            "sharded" : true,
+            "debug_objects": true,
+            "configsvr_layer":"mongo-cfg",
+            "mongos_layer":"conversation_app"
+          },
+          "deploy":{
+            "conversation_app":{
+              "environment_variables":{
+                "PORT":80,
+                "LOG_LEVEL":"silly",
+                "FAKE_CASSANDRA":"true"
+              }
+            }
+          },
+          "amazon" : {
+            "region" : { "Ref" : "AWS::Region" }
+          }
+        },
+        "DefaultOs": { "Ref": "DefaultOs" },
+        "UseCustomCookbooks": true,
+        "HostnameTheme": "Planets_and_Moons",
+        "CustomCookbooksSource": {
+          "Type": "git",
+          "Url": { "Ref" : "GitCookbookRepo" },
+          "Revision" : "master"
+        }
+      }
+    },
+    "app": {
+      "Type": "AWS::OpsWorks::App",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "conversation_app",
+        "Type": "nodejs",
+        "AppSource": {
+          "Type": "archive",
+          "Url": { "Ref" : "AppRepo" }
+        }
+      }
+    },
+    "appLayer": {
+      "Type": "AWS::OpsWorks::Layer",
+      "DependsOn": "app",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "conversation_app",
+        "CustomRecipes":{
+          "Setup" : ["mongodb::mongodb_org_repo"],
+          "Configure" : ["mongodb-opsworks::default", "mongodb::mongos","opsworks_nodejs::create_env_file"]
+        },
+        "Type": "nodejs-app",
+        "Shortname": "conversation_app",
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomSecurityGroupIds" : [
+          { "Ref" : "appProxySecurityGroup" }
+        ]
+      }
+    },
+    "appInstance0": {
+      "Type": "AWS::OpsWorks::Instance",
+      "DependsOn":["mongocfg0","mongocfg1","mongocfg2"],
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "appLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "appInstance1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "DependsOn":["mongocfg0","mongocfg1","mongocfg2"],
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "appLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "appInstance2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "DependsOn":["mongocfg0","mongocfg1","mongocfg2"],
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "appLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "ELB": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "CrossZone" : "true",
+        "SecurityGroups": [ { "Ref": "ELBSecurityGroup" } ],
+        "Subnets": { "Ref": "PublicSubnets" },
+        "Listeners": [ {
+          "LoadBalancerPort": "80",
+          "InstancePort": "80",
+          "Protocol": "HTTP"
+        } ],
+        "HealthCheck": {
+          "Target": "HTTP:80/",
+          "HealthyThreshold": "3",
+          "UnhealthyThreshold": "5",
+          "Interval": "90",
+          "Timeout": "60"
+        }
+      }
+    },
+
+    "ELBAttachment": {
+      "Type": "AWS::OpsWorks::ElasticLoadBalancerAttachment",
+      "Properties": {
+        "ElasticLoadBalancerName": { "Ref": "ELB" },
+        "LayerId": { "Ref": "appLayer" }
+      }
+    },
+    "ELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Allow inbound access to the ELB",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [ {
+          "IpProtocol": "tcp",
+          "FromPort": "80",
+          "ToPort": "80",
+          "CidrIp": "0.0.0.0/0"
+        } ],
+        "SecurityGroupEgress": [ {
+          "IpProtocol": "tcp",
+          "FromPort": "80",
+          "ToPort": "80",
+          "CidrIp": "0.0.0.0/0"
+        } ]
+      }
+    },
+    "appProxySecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "80",
+             "ToPort": "80",
+             "CidrIp": "0.0.0.0/0"
+           },
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "22",
+             "ToPort": "22",
+             "CidrIp": "0.0.0.0/0"
+           }
+        ]
+      }
+    },
+
+    "mongoSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Allow inbound requests from the ELB to the OpsWorks instances",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [
+           {
+             "IpProtocol": "tcp",
+             "FromPort": "27017",
+             "ToPort": "27017",
+             "CidrIp": "0.0.0.0/0"
+           }
+        ]
+      }
+    },
+    "mongoShardA": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "mongo-replicaset-shard-a",
+        "Type": "custom",
+        "Shortname": "shard-a",
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomRecipes":{
+          "Setup" : ["mongodb::mongodb_org_repo"],
+          "Configure" : ["mongodb-opsworks::default", "mongodb::shard", "mongodb::replicaset"]
+        },
+        "CustomSecurityGroupIds" : [
+          { "Ref" : "mongoSecurityGroup" }
+        ],
+        "VolumeConfigurations" : [
+          {
+            "MountPoint" : {"Ref":"MongoPath"},
+            "NumberOfDisks" : 2,
+            "RaidLevel" : 1,
+            "Size" : { "Ref" : "StorageSize" }
+          }
+        ]
+      }
+    },
+     "shardA0": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoShardA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "shardA1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoShardA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "shardA2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoShardA" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "mongoCfgLayer": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "Name": "mongo-cfg",
+        "Type": "custom",
+        "Shortname": "mongo-cfg",
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps": "false",
+        "AutoAssignPublicIps": "false",
+        "CustomRecipes":{
+          "Setup" : ["mongodb::mongodb_org_repo"],
+          "Configure" : ["mongodb-opsworks::default", "mongodb::configserver"]
+        },
+        "CustomSecurityGroupIds" : [
+          { "Ref" : "mongoSecurityGroup" }
+        ],
+        "VolumeConfigurations" : [
+          {
+            "MountPoint" : {"Ref":"MongoPath"},
+            "NumberOfDisks" : 2,
+            "RaidLevel" : 1,
+            "Size" : { "Ref" : "StorageSize" }
+          }
+        ]
+      }
+    },
+     "mongocfg0": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "0", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "mongocfg1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "1", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+     "mongocfg2": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "StackId": { "Ref": "stack" },
+        "LayerIds": [ { "Ref": "mongoCfgLayer" } ],
+        "InstallUpdatesOnBoot": false,
+        "InstanceType": { "Ref" : "InstanceType" },
+        "RootDeviceType": "ebs",
+        "Architecture": "x86_64",
+        "SubnetId" : { "Fn::Select" : [ "2", {"Ref" : "PrivateSubnets"} ] }
+      }
+    },
+    "OpsWorksServiceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": [ "ec2.amazonaws.com","opsworks.amazonaws.com" ] },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "opsworks-service",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                             "cloudwatch:GetMetricStatistics",
+                             "ec2:*",
+                             "elasticloadbalancing:*",
+                             "iam:PassRole",
+                             "rds:*"
+                           ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "OpsWorksInstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "opsworks-service",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "ec2:*",
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "OpsWorksInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [ { "Ref": "OpsWorksInstanceRole" } ]
+      }
+    }
+  },
+  "Outputs": {
+    "StackId": { "Value": { "Ref": "stack" } }
+  }
+}
